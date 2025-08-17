@@ -1,11 +1,86 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, Animated } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Hadist from '../screens/hadist';
 import Quran from '../screens/home';
 import Doa from '../screens/doa';
 
 const Tab = createBottomTabNavigator();
+
+// Custom Tab Icon Component with Animation
+const TabIcon = ({ focused, icon, label, isCenter = false }) => {
+  const scaleValue = React.useRef(new Animated.Value(focused ? 1.1 : 1)).current;
+  const translateY = React.useRef(new Animated.Value(focused ? -4 : 0)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleValue, {
+        toValue: focused ? 1.1 : 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateY, {
+        toValue: focused ? -4 : 0,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [focused]);
+
+  if (isCenter) {
+    return (
+      <Animated.View style={[
+        styles.centerIconContainer,
+        {
+          transform: [
+            { scale: scaleValue },
+            { translateY: translateY }
+          ]
+        }
+      ]}>
+        <View style={[styles.centerIcon, focused && styles.centerIconActive]}>
+          <Image
+            source={icon}
+            style={[
+              styles.centerIconImage,
+              { tintColor: focused ? '#ffffff' : '#1e3a8a' },
+            ]}
+          />
+        </View>
+        <Text style={[styles.label, styles.centerLabel, focused && styles.labelActive]}>
+          {label}
+        </Text>
+      </Animated.View>
+    );
+  }
+
+  return (
+    <Animated.View style={[
+      styles.iconContainer,
+      {
+        transform: [
+          { scale: scaleValue },
+          { translateY: translateY }
+        ]
+      }
+    ]}>
+      <View style={styles.iconWrapper}>
+        <Image
+          source={icon}
+          style={[
+            styles.icon,
+            { tintColor: focused ? '#1e3a8a' : '#64748b' },
+          ]}
+        />
+      </View>
+      <Text style={[styles.label, focused && styles.labelActive]}>
+        {label}
+      </Text>
+    </Animated.View>
+  );
+};
 
 export default function BottomTabsNavigation() {
   return (
@@ -17,70 +92,45 @@ export default function BottomTabsNavigation() {
         tabBarStyle: styles.tabBar,
       }}
     >
-      {/* Hadist Tab */}
       <Tab.Screen
         name="Hadist"
         component={Hadist}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={styles.iconContainer}>
-              <Image
-                source={require('../assets/icons/hadist.png')}
-                style={[
-                  styles.icon,
-                  { tintColor: focused ? '#1e3a8a' : '#64748b' },
-                ]}
-              />
-              <Text style={[styles.label, focused && styles.labelActive]}>
-                Hadist
-              </Text>
-            </View>
+            <TabIcon
+              focused={focused}
+              icon={require('../assets/icons/hadist.png')}
+              label="Hadist"
+            />
           ),
         }}
       />
 
-      {/* Quran Tab - Center with special styling */}
       <Tab.Screen
         name="Quran"
         component={Quran}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.iconContainer, styles.centerIconContainer]}>
-              <View style={[styles.centerIcon, focused && styles.centerIconActive]}>
-                <Image
-                  source={require('../assets/icons/quran2.png')}
-                  style={[
-                    styles.centerIconImage,
-                    { tintColor: focused ? '#ffffff' : '#1e3a8a' },
-                  ]}
-                />
-              </View>
-              <Text style={[styles.label, styles.centerLabel, focused && styles.labelActive]}>
-                Quran
-              </Text>
-            </View>
+            <TabIcon
+              focused={focused}
+              icon={require('../assets/icons/quran2.png')}
+              label="Quran"
+              isCenter={true}
+            />
           ),
         }}
       />
 
-      {/* Doa Tab */}
       <Tab.Screen
         name="Doa"
         component={Doa}
         options={{
           tabBarIcon: ({ focused }) => (
-            <View style={styles.iconContainer}>
-              <Image
-                source={require('../assets/icons/doa.png')}
-                style={[
-                  styles.icon,
-                  { tintColor: focused ? '#1e3a8a' : '#64748b' },
-                ]}
-              />
-              <Text style={[styles.label, focused && styles.labelActive]}>
-                Doa
-              </Text>
-            </View>
+            <TabIcon
+              focused={focused}
+              icon={require('../assets/icons/doa.png')}
+              label="Doa"
+            />
           ),
         }}
       />
@@ -91,75 +141,83 @@ export default function BottomTabsNavigation() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 25,
-    left: 50,
-    right: 50,
+    bottom: 20,
+    left: 30,
+    right: 30,
     height: 75,
     backgroundColor: '#ffffff',
-    borderRadius: 25,
-    shadowColor: '#1e3a8a',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
-    paddingBottom: 10,
-    paddingTop: 10,
+    borderRadius: 35,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
+    paddingBottom: 8,
+    paddingTop: 8,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: 'rgba(0,0,0,0.05)',
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
+  },
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    marginBottom: 4,
   },
   centerIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -30,
+    marginTop: -35,
   },
   icon: {
-    width: 28,
-    height: 28,
-    marginBottom: 6,
+    width: 26,
+    height: 26,
   },
   centerIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#e0f2fe',
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
+    backgroundColor: '#f8fafc',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    borderWidth: 4,
+    marginBottom: 6,
+    borderWidth: 5,
     borderColor: '#ffffff',
     shadowColor: '#1e3a8a',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
+    position: 'relative',
   },
   centerIconActive: {
     backgroundColor: '#1e3a8a',
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
   },
   centerIconImage: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#64748b',
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 2,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   centerLabel: {
-    marginTop: 8,
-    fontSize: 13,
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '700',
   },
   labelActive: {
     color: '#1e3a8a',
+    fontWeight: '700',
   },
 });
