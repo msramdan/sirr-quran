@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "144922548439",
+    "project_id": "aplikasi-attendance-mta",
+    "storage_bucket": "aplikasi-attendance-mta.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144922548439:android:7777c07330ccdf3c25b892",
+        "android_client_info": {
+          "package_name": "com.androidabsen"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBM4V_pJsyLufSatWWyurSpucVZuX06IaM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
