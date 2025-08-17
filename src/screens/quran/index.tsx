@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  ActivityIndicator, 
-  TouchableOpacity, 
-  TextInput, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  TextInput,
   SafeAreaView,
   Switch,
   StatusBar
@@ -14,7 +14,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const HomeScreen = () => {
+const QuranScreen = ({ navigation }) => {
   const [surahs, setSurahs] = useState([]);
   const [filteredSurahs, setFilteredSurahs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,7 @@ const HomeScreen = () => {
   // Color schemes
   const colors = {
     light: {
-      primary: '#0F1B2D', // Midnight blue
+      primary: '#0F1B2D',
       secondary: '#1A365D',
       accent: '#4299E1',
       background: '#F8FAFC',
@@ -60,10 +60,10 @@ const HomeScreen = () => {
           setSurahs(data.data);
           setFilteredSurahs(data.data);
         } else {
-          setError('Gagal mengambil data surah');
+          setError('Failed to fetch surahs');
         }
       } catch (err) {
-        setError('Error saat mengambil data');
+        setError('Error fetching data');
         console.error(err);
       } finally {
         setLoading(false);
@@ -77,7 +77,7 @@ const HomeScreen = () => {
     if (searchQuery.trim() === '') {
       setFilteredSurahs(surahs);
     } else {
-      const filtered = surahs.filter(surah => 
+      const filtered = surahs.filter(surah =>
         surah.namaLatin.toLowerCase().includes(searchQuery.toLowerCase()) ||
         surah.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
         surah.nomor.toString().includes(searchQuery)
@@ -91,41 +91,41 @@ const HomeScreen = () => {
   };
 
   const renderHeader = () => (
-    <LinearGradient 
+    <LinearGradient
       colors={[theme.primary, theme.secondary]}
       style={styles.headerContainer}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 0}}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
     >
       <View style={styles.headerContent}>
         <View>
-          <Text style={[styles.headerTitle, {color: '#FFF'}]}>Al-Qur'an</Text>
-          <Text style={[styles.headerSubtitle, {color: 'rgba(255,255,255,0.8)'}]}>
-            Bacalah dengan nama Tuhanmu
+          <Text style={[styles.headerTitle, { color: '#FFF' }]}>Al-Qur'an</Text>
+          <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.8)' }]}>
+            Read in the name of your Lord
           </Text>
         </View>
         <View style={styles.themeToggle}>
-          <Icon 
-            name={isDarkMode ? 'nights-stay' : 'wb-sunny'} 
-            size={20} 
-            color="#FFF" 
+          <Icon
+            name={isDarkMode ? 'nights-stay' : 'wb-sunny'}
+            size={20}
+            color="#FFF"
           />
           <Switch
             value={isDarkMode}
             onValueChange={toggleDarkMode}
             trackColor={{ false: "#767577", true: "#81b0ff" }}
             thumbColor={isDarkMode ? "#f5dd4b" : "#f4f3f4"}
-            style={{marginLeft: 8}}
+            style={{ marginLeft: 8 }}
           />
         </View>
       </View>
-      
-      <View style={[styles.searchContainer, {backgroundColor: theme.primary}]}>
-        <View style={[styles.searchInputContainer, {backgroundColor: theme.searchBg}]}>
+
+      <View style={[styles.searchContainer, { backgroundColor: theme.primary }]}>
+        <View style={[styles.searchInputContainer, { backgroundColor: theme.searchBg }]}>
           <Icon name="search" size={20} color={theme.subtext} style={styles.searchIcon} />
           <TextInput
-            style={[styles.searchInput, {color: theme.text}]}
-            placeholder="Cari surah..."
+            style={[styles.searchInput, { color: theme.text }]}
+            placeholder="Search surah..."
             placeholderTextColor={theme.subtext}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -136,34 +136,35 @@ const HomeScreen = () => {
   );
 
   const renderSurahItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
-        styles.surahItem, 
-        {backgroundColor: theme.card, borderBottomColor: theme.border}
+        styles.surahItem,
+        { backgroundColor: theme.card, borderBottomColor: theme.border }
       ]}
       activeOpacity={0.7}
+      onPress={() => navigation.navigate('DetailSurah', { surahNumber: item.nomor })}
     >
-      <LinearGradient 
+      <LinearGradient
         colors={[theme.accent, theme.secondary]}
         style={styles.surahNumberContainer}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 0}}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
       >
-        <Text style={[styles.surahNumber, {color: '#FFF'}]}>{item.nomor}</Text>
+        <Text style={[styles.surahNumber, { color: '#FFF' }]}>{item.nomor}</Text>
       </LinearGradient>
       <View style={styles.surahInfo}>
-        <Text style={[styles.surahName, {color: theme.text}]}>{item.namaLatin}</Text>
-        <Text style={[styles.surahDetails, {color: theme.subtext}]}>
-          {item.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'} • {item.jumlahAyat} ayat
+        <Text style={[styles.surahName, { color: theme.text }]}>{item.namaLatin}</Text>
+        <Text style={[styles.surahDetails, { color: theme.subtext }]}>
+          {item.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'} • {item.jumlahAyat} verses
         </Text>
       </View>
-      <Text style={[styles.surahArabic, {color: theme.accent}]}>{item.nama}</Text>
+      <Text style={[styles.surahArabic, { color: theme.accent }]}>{item.nama}</Text>
     </TouchableOpacity>
   );
 
   if (loading) {
     return (
-      <View style={[styles.center, {backgroundColor: theme.background}]}>
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.accent} />
       </View>
     );
@@ -171,19 +172,19 @@ const HomeScreen = () => {
 
   if (error) {
     return (
-      <View style={[styles.center, {backgroundColor: theme.background}]}>
-        <Text style={[styles.errorText, {color: theme.text}]}>{error}</Text>
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: theme.text }]}>{error}</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, {backgroundColor: theme.background}]}>
-      <StatusBar 
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
-        backgroundColor={theme.primary} 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.primary}
       />
-      <View style={[styles.container, {backgroundColor: theme.background}]}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
         <FlatList
           ListHeaderComponent={renderHeader}
           data={filteredSurahs}
@@ -320,4 +321,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default QuranScreen;

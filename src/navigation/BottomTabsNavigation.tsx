@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, Animated } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Hadist from '../screens/hadist';
-import Quran from '../screens/home';
+import Quran from '../screens/quran';
 import Doa from '../screens/doa';
 
 const Tab = createBottomTabNavigator();

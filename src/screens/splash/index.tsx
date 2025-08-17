@@ -16,7 +16,8 @@ const { width, height } = Dimensions.get('window');
 const SplashScreen = () => {
   const navigation = useNavigation();
 
-  // Animation references (removed logo-specific animations)
+  // Animation references
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const textSlideAnim = useRef(new Animated.Value(50)).current;
   const particleAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0.3)).current;
@@ -25,7 +26,7 @@ const SplashScreen = () => {
     StatusBar.setHidden(true);
 
     const startAnimations = () => {
-      // Simplified animations
+      // Animasi paralel untuk semua efek masuk
       Animated.parallel([
         // Text slide up
         Animated.timing(textSlideAnim, {
@@ -66,17 +67,24 @@ const SplashScreen = () => {
     startAnimations();
 
     const timer = setTimeout(() => {
-      StatusBar.setHidden(false);
-      navigation.replace('HomeScreen');
-    }, 4000);
+      // Animasi fade out sebelum navigasi
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        StatusBar.setHidden(false);
+        navigation.replace('QuranScreen');
+      });
+    }, 2000);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [navigation, textSlideAnim, particleAnim, glowAnim]);
+  }, [navigation, fadeAnim, textSlideAnim, particleAnim, glowAnim]);
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       {/* Dynamic gradient background */}
       <LinearGradient
         colors={['#0a0e27', '#1a1a2e', '#16213e', '#0f3460']}
@@ -103,7 +111,7 @@ const SplashScreen = () => {
 
       {/* Main content container */}
       <View style={styles.contentContainer}>
-        {/* Simplified logo section without animations and circle effect */}
+        {/* Logo section */}
         <View style={styles.logoContainer}>
           <Image
             source={require('../../assets/images/logo.webp')}
@@ -117,12 +125,11 @@ const SplashScreen = () => {
           style={[
             styles.textContainer,
             {
-              opacity: particleAnim, // Use particleAnim for fade effect
+              opacity: particleAnim,
               transform: [{ translateY: textSlideAnim }]
             }
           ]}
         >
-          {/* <Text style={styles.appName}>SIrr Al-Quran</Text> */}
           <Text style={styles.tagline}>Mendekat kepada-Nya melalui Kalam-Nya</Text>
 
           {/* Loading indicator */}
@@ -158,7 +165,7 @@ const SplashScreen = () => {
           style={styles.waveGradient}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -168,8 +175,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // Particle system
   particleContainer: {
     position: 'absolute',
     top: 0,
@@ -189,15 +194,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-
-  // Main content
   contentContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
   },
-
-  // Simplified logo container without circle effect
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -206,39 +207,20 @@ const styles = StyleSheet.create({
   logo: {
     width: 250,
     height: 250,
-    // Remove borderRadius to show full logo
   },
-
-  // Typography
   textContainer: {
     alignItems: 'center',
     marginTop: 20,
   },
-
-  appName: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-    letterSpacing: 2,
-    textShadowColor: 'rgba(100, 200, 255, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
-    marginBottom: 8,
-  },
-
   tagline: {
     fontSize: 16,
     fontWeight: '300',
-    color: '#FFFFFF', // putih solid
+    color: '#FFFFFF',
     textAlign: 'center',
     letterSpacing: 1,
     marginBottom: 30,
     fontStyle: 'italic',
   },
-
-
-  // Loading indicator
   loadingContainer: {
     alignItems: 'center',
   },
@@ -259,8 +241,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-
-  // Bottom decoration
   bottomWave: {
     position: 'absolute',
     bottom: 0,
