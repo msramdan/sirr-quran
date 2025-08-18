@@ -31,6 +31,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
   const [currentPlayingAyat, setCurrentPlayingAyat] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  const [showDescription, setShowDescription] = useState(false);
   const { width } = useWindowDimensions();
   const { colors, isDarkMode } = useTheme();
 
@@ -132,161 +133,268 @@ const DetailSurahScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderAudioControls = () => (
-    <View style={[styles.audioControls, {
-      backgroundColor: colors.card, 
-      shadowColor: colors.shadow
-    }]}>
-      <View style={styles.audioHeader}>
-        <IconFeather name="headphones" size={20} color={colors.accent} />
-        <Text style={[styles.audioTitle, {color: colors.text}]}>Select Reciter</Text>
-      </View>
-      
-      <View style={styles.qariOptions}>
-        {[
-          { id: '01', name: 'Juhany', subtitle: 'Abdullah Al-Juhany' },
-          { id: '02', name: 'Qasim', subtitle: 'Sa\'ad Al-Qasim' },
-          { id: '03', name: 'Sudais', subtitle: 'Abdur-Rahman As-Sudais' }
-        ].map((qari) => (
-          <TouchableOpacity 
-            key={qari.id}
-            style={[
-              styles.qariOption, 
-              { 
-                backgroundColor: selectedAudio === qari.id ? colors.accent : colors.background,
-                borderColor: selectedAudio === qari.id ? colors.accent : colors.border
-              }
-            ]}
-            onPress={() => setSelectedAudio(qari.id)}
-            activeOpacity={0.8}
-          >
-            <Text style={[
-              styles.qariName, 
-              { color: selectedAudio === qari.id ? '#FFF' : colors.text }
-            ]}>
-              {qari.name}
-            </Text>
-            <Text style={[
-              styles.qariSubtitle, 
-              { color: selectedAudio === qari.id ? 'rgba(255,255,255,0.8)' : colors.subtext }
-            ]}>
-              {qari.subtitle}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      
-      {surahDetail?.audioFull && (
-        <TouchableOpacity 
-          style={[styles.playButton, {backgroundColor: colors.accent}]}
-          onPress={() => playAudio(surahDetail.audioFull[selectedAudio], 'full')}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={[colors.accent, colors.accentLight || colors.accent]}
-            style={styles.playButtonGradient}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 0}}
-          >
-            <Icon 
-              name={currentPlayingAyat === 'full' && isPlaying ? 'pause' : 'play-arrow'} 
-              size={24} 
-              color="#FFF" 
-            />
-            <Text style={styles.playButtonText}>
-              {currentPlayingAyat === 'full' && isPlaying ? 'Pause' : 'Play'} Full Surah
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      )}
+  // Enhanced Hero Section with Islamic Pattern
+  const renderSurahHero = () => (
+    <View style={styles.heroContainer}>
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.heroGradient}
+      >
+        {/* Decorative Islamic Pattern Overlay */}
+        <View style={styles.patternOverlay}>
+          <View style={styles.geometricPattern}>
+            <View style={[styles.diamond, { backgroundColor: 'rgba(255,255,255,0.1)' }]} />
+            <View style={[styles.diamond, styles.diamondRotated, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+          </View>
+        </View>
+        
+        <View style={styles.heroContent}>
+          {/* Surah Number Badge */}
+          <View style={styles.surahNumberBadge}>
+            <Text style={styles.surahNumberText}>{surahNumber}</Text>
+          </View>
+          
+          {/* Main Title */}
+          <View style={styles.titleSection}>
+            <Text style={styles.surahNameArabic}>{surahDetail.nama}</Text>
+            <Text style={styles.surahNameLatin}>{surahDetail.namaLatin}</Text>
+            <Text style={styles.surahMeaning}>"{surahDetail.arti}"</Text>
+          </View>
+          
+          {/* Meta Information */}
+          <View style={styles.metaInfo}>
+            <View style={styles.metaItem}>
+              <Icon 
+                name={surahDetail.tempatTurun === 'mekah' ? 'location-on' : 'location-city'} 
+                size={16} 
+                color="rgba(255,255,255,0.9)" 
+              />
+              <Text style={styles.metaText}>
+                {surahDetail.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'}
+              </Text>
+            </View>
+            <View style={styles.metaDivider} />
+            <View style={styles.metaItem}>
+              <Icon name="book" size={16} color="rgba(255,255,255,0.9)" />
+              <Text style={styles.metaText}>{surahDetail.jumlahAyat} Verses</Text>
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
     </View>
   );
 
-  const renderAyatItem = (ayat) => (
-    <Animated.View 
+  // Enhanced Audio Player Section
+  const renderAudioSection = () => (
+    <View style={styles.audioSection}>
+      {/* Description Toggle */}
+      <TouchableOpacity 
+        style={[styles.descriptionHeader, { backgroundColor: colors.card }]}
+        onPress={() => setShowDescription(!showDescription)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.descriptionHeaderLeft}>
+          <View style={[styles.infoIconContainer, { backgroundColor: colors.accent + '20' }]}>
+            <Icon name="info-outline" size={18} color={colors.accent} />
+          </View>
+          <Text style={[styles.descriptionHeaderText, { color: colors.text }]}>
+            About this Surah
+          </Text>
+        </View>
+        <Icon 
+          name={showDescription ? 'expand-less' : 'expand-more'} 
+          size={24} 
+          color={colors.subtext} 
+        />
+      </TouchableOpacity>
+
+      {showDescription && (
+        <Animated.View style={[styles.descriptionContent, { backgroundColor: colors.background }]}>
+          <RenderHtml
+            contentWidth={width - 64}
+            source={{ html: surahDetail.deskripsi }}
+            baseStyle={{
+              color: colors.subtext,
+              fontSize: 14,
+              lineHeight: 22,
+              textAlign: 'justify',
+            }}
+          />
+        </Animated.View>
+      )}
+
+      {/* Audio Player Card */}
+      <View style={[styles.audioPlayerCard, { backgroundColor: colors.card }]}>
+        {/* Player Header */}
+        <View style={styles.audioPlayerHeader}>
+          <View style={styles.audioIconContainer}>
+<LinearGradient
+  colors={['#667eea', '#764ba2']}
+  style={styles.audioIconGradient}
+>
+  <IconFeather name="headphones" size={20} color="#FFF" />
+</LinearGradient>
+            <View>
+              <Text style={[styles.audioTitle, { color: colors.text }]}>Audio Recitation</Text>
+              <Text style={[styles.audioSubtitle, { color: colors.subtext }]}>Choose your reciter</Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Reciter Selection */}
+        <View style={styles.reciterContainer}>
+          {[
+            { id: '01', name: 'Abdullah Al-Juhany', short: 'Al-Juhany' },
+            { id: '02', name: 'Abdul Rashid Ali Sufi', short: 'Ali Sufi' },
+            { id: '03', name: 'Abdurrahman as-Sudais', short: 'As-Sudais' }
+          ].map((qari) => (
+            <TouchableOpacity 
+              key={qari.id}
+              style={[
+                styles.reciterCard,
+                { 
+                  backgroundColor: selectedAudio === qari.id ? '#667eea' : colors.background,
+                  borderColor: selectedAudio === qari.id ? '#667eea' : colors.border,
+                }
+              ]}
+              onPress={() => setSelectedAudio(qari.id)}
+              activeOpacity={0.8}
+            >
+              <View style={styles.reciterCardContent}>
+                <Icon 
+                  name="person" 
+                  size={16} 
+                  color={selectedAudio === qari.id ? '#FFF' : colors.subtext} 
+                />
+                <Text style={[
+                  styles.reciterName, 
+                  { color: selectedAudio === qari.id ? '#FFF' : colors.text }
+                ]}>
+                  {qari.short}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Play Button */}
+        {surahDetail?.audioFull && (
+          <TouchableOpacity 
+            style={styles.playButton}
+            onPress={() => playAudio(surahDetail.audioFull[selectedAudio], 'full')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.playButtonGradient}
+            >
+              <Icon 
+                name={currentPlayingAyat === 'full' && isPlaying ? 'pause' : 'play-arrow'} 
+                size={28} 
+                color="#FFF" 
+              />
+              <Text style={styles.playButtonText}>
+                {currentPlayingAyat === 'full' && isPlaying ? 'Pause Full Surah' : 'Play Full Surah'}
+              </Text>
+              {currentPlayingAyat === 'full' && isPlaying && (
+                <View style={styles.playingIndicator}>
+                  <View style={styles.waveBar} />
+                  <View style={styles.waveBar} />
+                  <View style={styles.waveBar} />
+                </View>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  // Enhanced Ayat Card with built-in transliteration
+  const renderAyatCard = (ayat) => (
+    <View 
       key={ayat.nomorAyat} 
-      style={[
-        styles.ayatContainer, 
-        { 
-          backgroundColor: colors.card,
-          shadowColor: colors.shadow,
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }]
-        }
-      ]}
+      style={[styles.ayatCard, { backgroundColor: colors.card }]}
     >
+      {/* Ayat Header */}
       <View style={styles.ayatHeader}>
-        <LinearGradient 
-          colors={[colors.accent, colors.accentLight || colors.accent]}
-          style={styles.ayatNumber}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-        >
-          <Text style={styles.ayatNumberText}>{ayat.nomorAyat}</Text>
-        </LinearGradient>
+        <View style={styles.ayatNumberContainer}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            style={styles.ayatNumberBadge}
+          >
+            <Text style={styles.ayatNumberText}>{ayat.nomorAyat}</Text>
+          </LinearGradient>
+        </View>
         
         <TouchableOpacity 
           style={[
-            styles.audioButton, 
+            styles.ayatPlayBtn, 
             { 
-              borderColor: currentPlayingAyat === ayat.nomorAyat && isPlaying ? colors.success : colors.accent,
-              backgroundColor: currentPlayingAyat === ayat.nomorAyat && isPlaying ? `${colors.success}20` : 'transparent'
+              backgroundColor: currentPlayingAyat === ayat.nomorAyat && isPlaying 
+                ? '#667eea20' : colors.background,
             }
           ]}
           onPress={() => playAudio(ayat.audio[selectedAudio], ayat.nomorAyat)}
           activeOpacity={0.8}
         >
-          <IconFeather 
-            name={currentPlayingAyat === ayat.nomorAyat && isPlaying ? 'pause' : 'play'} 
-            size={16} 
-            color={currentPlayingAyat === ayat.nomorAyat && isPlaying ? colors.success : colors.accent} 
+          <Icon 
+            name={currentPlayingAyat === ayat.nomorAyat && isPlaying ? 'pause' : 'play-arrow'} 
+            size={20} 
+            color="#667eea" 
           />
         </TouchableOpacity>
       </View>
       
+      {/* Ayat Content */}
       <View style={styles.ayatContent}>
-        <Text style={[styles.arabicText, {color: colors.text}]}>
+        {/* Arabic Text */}
+        <Text style={[styles.arabicText, { color: colors.text }]}>
           {ayat.teksArab}
         </Text>
         
-        <View style={[styles.transliterationContainer, { backgroundColor: colors.backgroundSecondary }]}>
-          <Text style={[styles.latinText, {color: colors.textSecondary}]}>
-            {ayat.teksLatin}
+        {/* Transliteration - Always Visible but Small */}
+        <Text style={[styles.transliterationText, { color: colors.subtext }]}>
+          {ayat.teksLatin}
+        </Text>
+        
+        {/* Indonesian Translation */}
+        <View style={[styles.translationContainer, { borderLeftColor: '#667eea' }]}>
+          <Text style={[styles.translationText, { color: colors.text }]}>
+            {ayat.teksIndonesia}
           </Text>
         </View>
-        
-        <Text style={[styles.translationText, {color: colors.text}]}>
-          {ayat.teksIndonesia}
-        </Text>
       </View>
-    </Animated.View>
+    </View>
   );
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, {backgroundColor: colors.background}]}>
-        <LinearGradient
-          colors={[colors.accent, colors.accentLight || colors.accent]}
-          style={styles.loadingIndicator}
-        >
-          <ActivityIndicator size="large" color="#FFF" />
-        </LinearGradient>
-        <Text style={[styles.loadingText, {color: colors.text}]}>Loading Surah...</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color="#667eea" />
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading Surah...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.loadingContainer, {backgroundColor: colors.background}]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
-          <Icon name="error-outline" size={48} color={colors.warning} />
-          <Text style={[styles.errorText, {color: colors.text}]}>{error}</Text>
+          <Icon name="error-outline" size={48} color="#667eea" />
+          <Text style={[styles.errorText, { color: colors.text }]}>{error}</Text>
           <TouchableOpacity 
-            style={[styles.retryButton, { backgroundColor: colors.accent }]}
+            style={styles.retryButton}
             onPress={() => window.location.reload()}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.retryButtonGradient}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
@@ -298,138 +406,64 @@ const DetailSurahScreen = ({ route, navigation }) => {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, {backgroundColor: colors.background}]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <Header 
         title={surahDetail?.namaLatin || 'Loading...'}
         subtitle={`${surahDetail?.jumlahAyat} verses`}
         showBackButton={true}
         onBackPress={() => navigation.goBack()}
-        additionalContent={
-          <View style={[styles.badge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-            <Text style={[styles.badgeText, {color: '#FFF'}]}>
-              {surahDetail?.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'}
-            </Text>
-          </View>
-        }
       />
       
       <ScrollView 
-        style={[styles.container, {backgroundColor: colors.background}]}
+        style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Enhanced Hero Section */}
+        {renderSurahHero()}
+        
+        {/* Basmalah */}
         {surahNumber !== 1 && surahNumber !== 9 && (
-          <Animated.View 
-            style={[
-              styles.basmalahContainer, 
-              { 
-                backgroundColor: colors.card,
-                shadowColor: colors.shadow,
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }]
-              }
-            ]}
-          >
+          <View style={styles.basmalahContainer}>
             <LinearGradient
-              colors={[`${colors.accent}15`, `${colors.accentLight || colors.accent}15`]}
-              style={styles.basmalahBackground}
+              colors={['#667eea15', '#764ba210']}
+              style={styles.basmalahCard}
             >
-              <Text style={[styles.basmalah, {color: colors.accent}]}>
+              <Text style={[styles.basmalahText, { color: colors.accent }]}>
                 بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
               </Text>
             </LinearGradient>
-          </Animated.View>
+          </View>
         )}
         
-        <Animated.View
-          style={{
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }}
-        >
-          {renderAudioControls()}
-        </Animated.View>
+        {/* Enhanced Audio Section */}
+        {renderAudioSection()}
         
-        <Animated.View 
-          style={[
-            styles.surahInfo,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }
-          ]}
-        >
-          <View style={[styles.surahTitleContainer, { 
-            backgroundColor: colors.card, 
-            shadowColor: colors.shadow 
-          }]}>
-            <Text style={[styles.surahName, {color: colors.text}]}>
-              {surahDetail.namaLatin}
-            </Text>
-            <Text style={[styles.surahNameArabic, {color: colors.accent}]}>
-              {surahDetail.nama}
-            </Text>
-            <View style={[styles.meaningContainer, { backgroundColor: colors.backgroundSecondary }]}>
-              <Text style={[styles.surahArt, {color: colors.textSecondary}]}>
-                "{surahDetail.arti}"
-              </Text>
-            </View>
-          </View>
-          
-          <View style={[styles.descriptionContainer, {
-            backgroundColor: colors.card, 
-            shadowColor: colors.shadow
-          }]}>
-            <View style={styles.descriptionHeader}>
-              <Icon name="info-outline" size={20} color={colors.accent} />
-              <Text style={[styles.descriptionTitle, {color: colors.text}]}>About this Surah</Text>
-            </View>
-            <RenderHtml
-              contentWidth={width - 64}
-              source={{ html: surahDetail.deskripsi }}
-              baseStyle={{
-                color: colors.textSecondary,
-                fontSize: 14,
-                lineHeight: 22,
-                textAlign: 'justify',
-                fontFamily: 'sans-serif',
-              }}
-            />
-          </View>
-        </Animated.View>
-        
+        {/* Ayat List */}
         <View style={styles.ayatList}>
-          {surahDetail.ayat.map(renderAyatItem)}
+          {surahDetail.ayat.map(renderAyatCard)}
         </View>
         
+        {/* Next Surah */}
         {surahDetail.suratSelanjutnya && (
-          <Animated.View
-            style={{
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }]
-            }}
+          <TouchableOpacity 
+            style={styles.nextSurahContainer}
+            onPress={() => navigation.replace('DetailSurah', { surahNumber: surahDetail.suratSelanjutnya.nomor })}
+            activeOpacity={0.8}
           >
-            <TouchableOpacity 
-              style={styles.nextSurah}
-              onPress={() => navigation.replace('DetailSurah', { surahNumber: surahDetail.suratSelanjutnya.nomor })}
-              activeOpacity={0.9}
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.nextSurahCard}
             >
-              <LinearGradient
-                colors={[colors.accent, colors.accentLight || colors.accent]}
-                style={styles.nextSurahGradient}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
-              >
-                <View style={styles.nextSurahContent}>
-                  <Text style={styles.nextSurahLabel}>Next Surah</Text>
-                  <Text style={styles.nextSurahText}>
-                    {surahDetail.suratSelanjutnya.namaLatin}
-                  </Text>
-                </View>
-                <Icon name="chevron-right" size={24} color="#FFF" />
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
+              <View style={styles.nextSurahContent}>
+                <Text style={styles.nextSurahLabel}>Continue Reading</Text>
+                <Text style={styles.nextSurahTitle}>
+                  {surahDetail.suratSelanjutnya.namaLatin}
+                </Text>
+              </View>
+              <Icon name="arrow-forward" size={24} color="#FFF" />
+            </LinearGradient>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -449,17 +483,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-  loadingIndicator: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
   loadingText: {
     fontSize: 16,
     fontWeight: '600',
+    marginTop: 16,
   },
   errorContainer: {
     padding: 32,
@@ -474,9 +501,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   retryButton: {
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  retryButtonGradient: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
   },
   retryButtonText: {
     color: '#FFF',
@@ -486,72 +516,198 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 12,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  basmalahContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    borderRadius: 16,
+
+  // Enhanced Hero Section
+  heroContainer: {
+    margin: 20,
+    borderRadius: 20,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
   },
-  basmalahBackground: {
-    padding: 24,
+  heroGradient: {
+    padding: 28,
+    position: 'relative',
+  },
+  patternOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 120,
+    height: 120,
+    overflow: 'hidden',
+  },
+  geometricPattern: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  basmalah: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 36,
+  diamond: {
+    width: 60,
+    height: 60,
+    transform: [{ rotate: '45deg' }],
+    position: 'absolute',
   },
-  audioControls: {
-    marginHorizontal: 20,
-    marginTop: 20,
+  diamondRotated: {
+    transform: [{ rotate: '90deg' }],
+    width: 40,
+    height: 40,
+  },
+  heroContent: {
+    alignItems: 'center',
+    gap: 16,
+  },
+  surahNumberBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  surahNumberText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  titleSection: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  surahNameArabic: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFF',
+    textAlign: 'center',
+  },
+  surahNameLatin: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#FFF',
+    textAlign: 'center',
+  },
+  surahMeaning: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  metaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginTop: 8,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 16,
+  },
+  metaText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Enhanced Audio Section
+  audioSection: {
+    paddingHorizontal: 20,
+    gap: 16,
+  },
+  descriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  descriptionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  infoIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  descriptionHeaderText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  descriptionContent: {
+    padding: 16,
+    borderRadius: 12,
+    marginTop: -8,
+  },
+  audioPlayerCard: {
     borderRadius: 16,
     padding: 20,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     elevation: 6,
   },
-  audioHeader: {
+  audioPlayerHeader: {
+    marginBottom: 20,
+  },
+  audioIconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: 16,
+  },
+  audioIconGradient: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   audioTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginLeft: 8,
   },
-  qariOptions: {
+  audioSubtitle: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  reciterContainer: {
+    flexDirection: 'row',
+    gap: 8,
     marginBottom: 20,
   },
-  qariOption: {
-    padding: 16,
+  reciterCard: {
+    flex: 1,
+    padding: 12,
     borderRadius: 12,
-    borderWidth: 2,
-    marginBottom: 12,
+    borderWidth: 1,
   },
-  qariName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+  reciterCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  qariSubtitle: {
+  reciterName: {
     fontSize: 12,
+    fontWeight: '600',
   },
   playButton: {
     borderRadius: 12,
@@ -562,90 +718,69 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
+    gap: 12,
   },
   playButtonText: {
     color: '#FFF',
-    marginLeft: 12,
     fontSize: 16,
     fontWeight: '600',
   },
-  surahInfo: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-  },
-  surahTitleContainer: {
-    padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  surahName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  surahNameArabic: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  meaningContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  surahArt: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
-  },
-  descriptionContainer: {
-    padding: 20,
-    borderRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  descriptionHeader: {
+  playingIndicator: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  descriptionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    gap: 2,
     marginLeft: 8,
   },
+  waveBar: {
+    width: 3,
+    height: 12,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 2,
+  },
+
+  // Basmalah
+  basmalahContainer: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  basmalahCard: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  basmalahText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+
+  // Enhanced Ayat Cards
   ayatList: {
     paddingHorizontal: 20,
-    marginTop: 20,
+    gap: 16,
+    marginTop: 16,
   },
-  ayatContainer: {
+  ayatCard: {
     borderRadius: 16,
-    marginBottom: 20,
     padding: 20,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     elevation: 6,
   },
   ayatHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
-  ayatNumber: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  ayatNumberContainer: {
+    alignItems: 'center',
+  },
+  ayatNumberBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -654,46 +789,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  audioButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
+  ayatPlayBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   ayatContent: {
-    marginTop: 8,
+    gap: 12,
   },
   arabicText: {
-    fontSize: 28,
-    lineHeight: 56,
-    marginBottom: 16,
+    fontSize: 24,
+    lineHeight: 48,
     textAlign: 'right',
     fontWeight: '500',
   },
-  transliterationContainer: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  latinText: {
-    fontSize: 14,
+  transliterationText: {
+    fontSize: 12,
     fontStyle: 'italic',
-    lineHeight: 20,
+    lineHeight: 18,
+    textAlign: 'right',
+    opacity: 0.8,
+  },
+  translationContainer: {
+    paddingLeft: 12,
+    borderLeftWidth: 3,
+    marginTop: 4,
   },
   translationText: {
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 24,
     textAlign: 'justify',
   },
-  nextSurah: {
+
+  // Next Surah
+  nextSurahContainer: {
     marginHorizontal: 20,
     marginTop: 20,
     borderRadius: 16,
     overflow: 'hidden',
   },
-  nextSurahGradient: {
+  nextSurahCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -704,11 +841,11 @@ const styles = StyleSheet.create({
   },
   nextSurahLabel: {
     color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     marginBottom: 4,
   },
-  nextSurahText: {
+  nextSurahTitle: {
     color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
