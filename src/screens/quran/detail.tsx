@@ -5,18 +5,20 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
-  StatusBar,
-  SafeAreaView,
   ActivityIndicator,
-  Switch
+  Animated,
+  Easing,
+  useWindowDimensions,
+  SafeAreaView 
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import IconFeather from 'react-native-vector-icons/Feather';
 import { Audio } from 'expo-av';
 import RenderHtml from 'react-native-render-html';
-import { useWindowDimensions } from 'react-native';
+import Header from '../../components/Header';
+import { useTheme } from '../../utils/ThemeContext';
+import { BASE_URL } from '../../utils/constants';
 
 const DetailSurahScreen = ({ route, navigation }) => {
   const { surahNumber } = route.params;
@@ -27,45 +29,33 @@ const DetailSurahScreen = ({ route, navigation }) => {
   const [sound, setSound] = useState(null);
   const [selectedAudio, setSelectedAudio] = useState('03');
   const [currentPlayingAyat, setCurrentPlayingAyat] = useState(null);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
   const { width } = useWindowDimensions();
-
-  // Color schemes
-  const colors = {
-    light: {
-      primary: '#0F1B2D',
-      secondary: '#1A365D',
-      accent: '#4299E1',
-      background: '#F8FAFC',
-      card: '#FFFFFF',
-      text: '#1A202C',
-      subtext: '#4A5568',
-      border: '#E2E8F0',
-      searchBg: '#EDF2F7',
-    },
-    dark: {
-      primary: '#0A192F',
-      secondary: '#172A45',
-      accent: '#63B3ED',
-      background: '#1A202C',
-      card: '#2D3748',
-      text: '#F7FAFC',
-      subtext: '#CBD5E0',
-      border: '#4A5568',
-      searchBg: '#2D3748',
-    }
-  };
-
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const theme = isDarkMode ? colors.dark : colors.light;
+  const { colors, isDarkMode } = useTheme();
 
   useEffect(() => {
     const fetchSurahDetail = async () => {
       try {
-        const response = await fetch(`https://equran.id/api/v2/surat/${surahNumber}`);
+        const response = await fetch(`${BASE_URL}/surat/${surahNumber}`);
         const data = await response.json();
 
         if (data.code === 200) {
           setSurahDetail(data.data);
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 600,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 600,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+          ]).start();
         } else {
           setError('Failed to fetch surah details');
         }
@@ -87,10 +77,6 @@ const DetailSurahScreen = ({ route, navigation }) => {
       }
     };
   }, [sound]);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   const playAudio = async (audioUrl, ayatNumber) => {
     try {
@@ -146,167 +132,163 @@ const DetailSurahScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderHeader = () => (
-    <LinearGradient 
-      colors={[theme.primary, theme.secondary]}
-      style={styles.headerContainer}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 0}}
-    >
-      <View style={styles.headerContent}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color="#FFF" />
-        </TouchableOpacity>
-        
-        <View style={styles.headerTextContainer}>
-          <Text style={[styles.headerTitle, {color: '#FFF'}]}>
-            {surahDetail?.namaLatin || 'Loading...'}
-          </Text>
-          <Text style={[styles.headerSubtitle, {color: 'rgba(255,255,255,0.8)'}]}>
-            {surahDetail?.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'} • {surahDetail?.jumlahAyat} verses
-          </Text>
-        </View>
-        
-        <View style={styles.themeToggle}>
-          <Icon 
-            name={isDarkMode ? 'nights-stay' : 'wb-sunny'} 
-            size={20} 
-            color="#FFF" 
-          />
-          <Switch
-            value={isDarkMode}
-            onValueChange={toggleDarkMode}
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={isDarkMode ? "#f5dd4b" : "#f4f3f4"}
-            style={{marginLeft: 8}}
-          />
-        </View>
-      </View>
-    </LinearGradient>
-  );
-
   const renderAudioControls = () => (
-    <View style={[styles.audioControls, {backgroundColor: theme.card}]}>
-      <Text style={[styles.audioTitle, {color: theme.text}]}>Select Reciter:</Text>
+    <View style={[styles.audioControls, {
+      backgroundColor: colors.card, 
+      shadowColor: colors.shadow
+    }]}>
+      <View style={styles.audioHeader}>
+        <IconFeather name="headphones" size={20} color={colors.accent} />
+        <Text style={[styles.audioTitle, {color: colors.text}]}>Select Reciter</Text>
+      </View>
+      
       <View style={styles.qariOptions}>
-        <TouchableOpacity 
-          style={[
-            styles.qariOption, 
-            selectedAudio === '01' && {backgroundColor: theme.accent}
-          ]}
-          onPress={() => setSelectedAudio('01')}
-        >
-          <Text style={[
-            styles.qariOptionText, 
-            {color: selectedAudio === '01' ? '#FFF' : theme.text}
-          ]}>
-            Juhany
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.qariOption, 
-            selectedAudio === '02' && {backgroundColor: theme.accent}
-          ]}
-          onPress={() => setSelectedAudio('02')}
-        >
-          <Text style={[
-            styles.qariOptionText, 
-            {color: selectedAudio === '02' ? '#FFF' : theme.text}
-          ]}>
-            Qasim
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.qariOption, 
-            selectedAudio === '03' && {backgroundColor: theme.accent}
-          ]}
-          onPress={() => setSelectedAudio('03')}
-        >
-          <Text style={[
-            styles.qariOptionText, 
-            {color: selectedAudio === '03' ? '#FFF' : theme.text}
-          ]}>
-            Sudais
-          </Text>
-        </TouchableOpacity>
+        {[
+          { id: '01', name: 'Juhany', subtitle: 'Abdullah Al-Juhany' },
+          { id: '02', name: 'Qasim', subtitle: 'Sa\'ad Al-Qasim' },
+          { id: '03', name: 'Sudais', subtitle: 'Abdur-Rahman As-Sudais' }
+        ].map((qari) => (
+          <TouchableOpacity 
+            key={qari.id}
+            style={[
+              styles.qariOption, 
+              { 
+                backgroundColor: selectedAudio === qari.id ? colors.accent : colors.background,
+                borderColor: selectedAudio === qari.id ? colors.accent : colors.border
+              }
+            ]}
+            onPress={() => setSelectedAudio(qari.id)}
+            activeOpacity={0.8}
+          >
+            <Text style={[
+              styles.qariName, 
+              { color: selectedAudio === qari.id ? '#FFF' : colors.text }
+            ]}>
+              {qari.name}
+            </Text>
+            <Text style={[
+              styles.qariSubtitle, 
+              { color: selectedAudio === qari.id ? 'rgba(255,255,255,0.8)' : colors.subtext }
+            ]}>
+              {qari.subtitle}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
       
       {surahDetail?.audioFull && (
         <TouchableOpacity 
-          style={[styles.playButton, {backgroundColor: theme.accent}]}
+          style={[styles.playButton, {backgroundColor: colors.accent}]}
           onPress={() => playAudio(surahDetail.audioFull[selectedAudio], 'full')}
+          activeOpacity={0.9}
         >
-          <Icon 
-            name={currentPlayingAyat === 'full' && isPlaying ? 'pause' : 'play-arrow'} 
-            size={24} 
-            color="#FFF" 
-          />
-          <Text style={styles.playButtonText}>
-            {currentPlayingAyat === 'full' && isPlaying ? 'Pause' : 'Play'} Full Surah
-          </Text>
+          <LinearGradient
+            colors={[colors.accent, colors.accentLight || colors.accent]}
+            style={styles.playButtonGradient}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+          >
+            <Icon 
+              name={currentPlayingAyat === 'full' && isPlaying ? 'pause' : 'play-arrow'} 
+              size={24} 
+              color="#FFF" 
+            />
+            <Text style={styles.playButtonText}>
+              {currentPlayingAyat === 'full' && isPlaying ? 'Pause' : 'Play'} Full Surah
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       )}
     </View>
   );
 
   const renderAyatItem = (ayat) => (
-    <View 
+    <Animated.View 
       key={ayat.nomorAyat} 
-      style={[styles.ayatContainer, {backgroundColor: theme.card}]}
+      style={[
+        styles.ayatContainer, 
+        { 
+          backgroundColor: colors.card,
+          shadowColor: colors.shadow,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }
+      ]}
     >
-      <View style={styles.ayatNumberContainer}>
+      <View style={styles.ayatHeader}>
         <LinearGradient 
-          colors={[theme.accent, theme.secondary]}
+          colors={[colors.accent, colors.accentLight || colors.accent]}
           style={styles.ayatNumber}
           start={{x: 0, y: 0}}
-          end={{x: 1, y: 0}}
+          end={{x: 1, y: 1}}
         >
-          <Text style={[styles.ayatNumberText, {color: '#FFF'}]}>{ayat.nomorAyat}</Text>
+          <Text style={styles.ayatNumberText}>{ayat.nomorAyat}</Text>
         </LinearGradient>
+        
+        <TouchableOpacity 
+          style={[
+            styles.audioButton, 
+            { 
+              borderColor: currentPlayingAyat === ayat.nomorAyat && isPlaying ? colors.success : colors.accent,
+              backgroundColor: currentPlayingAyat === ayat.nomorAyat && isPlaying ? `${colors.success}20` : 'transparent'
+            }
+          ]}
+          onPress={() => playAudio(ayat.audio[selectedAudio], ayat.nomorAyat)}
+          activeOpacity={0.8}
+        >
+          <IconFeather 
+            name={currentPlayingAyat === ayat.nomorAyat && isPlaying ? 'pause' : 'play'} 
+            size={16} 
+            color={currentPlayingAyat === ayat.nomorAyat && isPlaying ? colors.success : colors.accent} 
+          />
+        </TouchableOpacity>
       </View>
       
       <View style={styles.ayatContent}>
-        <Text style={[styles.arabicText, {color: theme.text, textAlign: 'right'}]}>
+        <Text style={[styles.arabicText, {color: colors.text}]}>
           {ayat.teksArab}
         </Text>
         
-        <View style={styles.audioButtonContainer}>
-          <TouchableOpacity 
-            style={[styles.audioButton, {borderColor: theme.accent}]}
-            onPress={() => playAudio(ayat.audio[selectedAudio], ayat.nomorAyat)}
-          >
-            <IconFeather 
-              name={currentPlayingAyat === ayat.nomorAyat && isPlaying ? 'pause' : 'play'} 
-              size={16} 
-              color={theme.accent} 
-            />
-          </TouchableOpacity>
+        <View style={[styles.transliterationContainer, { backgroundColor: colors.backgroundSecondary }]}>
+          <Text style={[styles.latinText, {color: colors.textSecondary}]}>
+            {ayat.teksLatin}
+          </Text>
         </View>
         
-        <Text style={[styles.latinText, {color: theme.subtext}]}>
-          {ayat.teksLatin}
-        </Text>
-        <Text style={[styles.translationText, {color: theme.text}]}>
+        <Text style={[styles.translationText, {color: colors.text}]}>
           {ayat.teksIndonesia}
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, {backgroundColor: theme.background}]}>
-        <ActivityIndicator size="large" color={theme.accent} />
+      <View style={[styles.loadingContainer, {backgroundColor: colors.background}]}>
+        <LinearGradient
+          colors={[colors.accent, colors.accentLight || colors.accent]}
+          style={styles.loadingIndicator}
+        >
+          <ActivityIndicator size="large" color="#FFF" />
+        </LinearGradient>
+        <Text style={[styles.loadingText, {color: colors.text}]}>Loading Surah...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.loadingContainer, {backgroundColor: theme.background}]}>
-        <Text style={[styles.errorText, {color: theme.text}]}>{error}</Text>
+      <View style={[styles.loadingContainer, {backgroundColor: colors.background}]}>
+        <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
+          <Icon name="error-outline" size={48} color={colors.warning} />
+          <Text style={[styles.errorText, {color: colors.text}]}>{error}</Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: colors.accent }]}
+            onPress={() => window.location.reload()}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -316,64 +298,138 @@ const DetailSurahScreen = ({ route, navigation }) => {
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, {backgroundColor: theme.background}]}>
-      <StatusBar 
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
-        backgroundColor={theme.primary} 
-      />
-      
-      {renderHeader()}
-      
-      <ScrollView 
-        style={[styles.container, {backgroundColor: theme.background}]}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {surahNumber !== 1 && surahNumber !== 9 && (
-          <View style={[styles.basmalahContainer, {backgroundColor: theme.card}]}>
-            <Text style={[styles.basmalah, {color: theme.accent}]}>
-              بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
+    <SafeAreaView style={[styles.safeArea, {backgroundColor: colors.background}]}>
+      <Header 
+        title={surahDetail?.namaLatin || 'Loading...'}
+        subtitle={`${surahDetail?.jumlahAyat} verses`}
+        showBackButton={true}
+        onBackPress={() => navigation.goBack()}
+        additionalContent={
+          <View style={[styles.badge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <Text style={[styles.badgeText, {color: '#FFF'}]}>
+              {surahDetail?.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'}
             </Text>
           </View>
+        }
+      />
+      
+      <ScrollView 
+        style={[styles.container, {backgroundColor: colors.background}]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {surahNumber !== 1 && surahNumber !== 9 && (
+          <Animated.View 
+            style={[
+              styles.basmalahContainer, 
+              { 
+                backgroundColor: colors.card,
+                shadowColor: colors.shadow,
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <LinearGradient
+              colors={[`${colors.accent}15`, `${colors.accentLight || colors.accent}15`]}
+              style={styles.basmalahBackground}
+            >
+              <Text style={[styles.basmalah, {color: colors.accent}]}>
+                بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ
+              </Text>
+            </LinearGradient>
+          </Animated.View>
         )}
         
-        {renderAudioControls()}
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }]
+          }}
+        >
+          {renderAudioControls()}
+        </Animated.View>
         
-        <View style={styles.surahInfo}>
-          <Text style={[styles.surahName, {color: theme.text}]}>
-            {surahDetail.namaLatin} ({surahDetail.nama})
-          </Text>
-          <Text style={[styles.surahArt, {color: theme.accent}]}>
-            Meaning: {surahDetail.arti}
-          </Text>
+        <Animated.View 
+          style={[
+            styles.surahInfo,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <View style={[styles.surahTitleContainer, { 
+            backgroundColor: colors.card, 
+            shadowColor: colors.shadow 
+          }]}>
+            <Text style={[styles.surahName, {color: colors.text}]}>
+              {surahDetail.namaLatin}
+            </Text>
+            <Text style={[styles.surahNameArabic, {color: colors.accent}]}>
+              {surahDetail.nama}
+            </Text>
+            <View style={[styles.meaningContainer, { backgroundColor: colors.backgroundSecondary }]}>
+              <Text style={[styles.surahArt, {color: colors.textSecondary}]}>
+                "{surahDetail.arti}"
+              </Text>
+            </View>
+          </View>
           
-          <View style={[styles.descriptionContainer, {backgroundColor: theme.card}]}>
+          <View style={[styles.descriptionContainer, {
+            backgroundColor: colors.card, 
+            shadowColor: colors.shadow
+          }]}>
+            <View style={styles.descriptionHeader}>
+              <Icon name="info-outline" size={20} color={colors.accent} />
+              <Text style={[styles.descriptionTitle, {color: colors.text}]}>About this Surah</Text>
+            </View>
             <RenderHtml
-              contentWidth={width}
+              contentWidth={width - 64}
               source={{ html: surahDetail.deskripsi }}
               baseStyle={{
-                color: theme.text,
+                color: colors.textSecondary,
                 fontSize: 14,
                 lineHeight: 22,
                 textAlign: 'justify',
+                fontFamily: 'sans-serif',
               }}
             />
           </View>
-        </View>
+        </Animated.View>
         
         <View style={styles.ayatList}>
           {surahDetail.ayat.map(renderAyatItem)}
         </View>
         
         {surahDetail.suratSelanjutnya && (
-          <TouchableOpacity 
-            style={[styles.nextSurah, {backgroundColor: theme.accent}]}
-            onPress={() => navigation.replace('DetailSurah', { surahNumber: surahDetail.suratSelanjutnya.nomor })}
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }}
           >
-            <Text style={styles.nextSurahText}>
-              Next Surah: {surahDetail.suratSelanjutnya.namaLatin}
-            </Text>
-            <Icon name="chevron-right" size={24} color="#FFF" />
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.nextSurah}
+              onPress={() => navigation.replace('DetailSurah', { surahNumber: surahDetail.suratSelanjutnya.nomor })}
+              activeOpacity={0.9}
+            >
+              <LinearGradient
+                colors={[colors.accent, colors.accentLight || colors.accent]}
+                style={styles.nextSurahGradient}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 0}}
+              >
+                <View style={styles.nextSurahContent}>
+                  <Text style={styles.nextSurahLabel}>Next Surah</Text>
+                  <Text style={styles.nextSurahText}>
+                    {surahDetail.suratSelanjutnya.namaLatin}
+                  </Text>
+                </View>
+                <Icon name="chevron-right" size={24} color="#FFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </Animated.View>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -391,212 +447,271 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
-  scrollContent: {
-    paddingBottom: 20,
-  },
-  headerContainer: {
-    paddingTop: 16,
-    paddingBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-    zIndex: 10,
-  },
-  headerContent: {
-    flexDirection: 'row',
+  loadingIndicator: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    marginBottom: 20,
   },
-  backButton: {
-    marginRight: 16,
-  },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'sans-serif-medium',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
-    fontFamily: 'sans-serif',
-  },
-  themeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  basmalahContainer: {
-    padding: 20,
-    margin: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  basmalah: {
-    fontSize: 20,
-    fontFamily: 'Traditional Arabic',
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  audioControls: {
-    padding: 16,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  audioTitle: {
+  loadingText: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 12,
-    fontFamily: 'sans-serif-medium',
   },
-  qariOptions: {
+  errorContainer: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    maxWidth: 300,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 16,
+    lineHeight: 24,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  basmalahContainer: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  basmalahBackground: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  basmalah: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  audioControls: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    padding: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  audioHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
-  qariOption: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  audioTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 8,
   },
-  qariOptionText: {
-    fontSize: 14,
-    fontFamily: 'sans-serif',
+  qariOptions: {
+    marginBottom: 20,
+  },
+  qariOption: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    marginBottom: 12,
+  },
+  qariName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  qariSubtitle: {
+    fontSize: 12,
   },
   playButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  playButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
   },
   playButtonText: {
     color: '#FFF',
-    marginLeft: 8,
+    marginLeft: 12,
     fontSize: 16,
-    fontFamily: 'sans-serif-medium',
+    fontWeight: '600',
   },
   surahInfo: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  surahTitleContainer: {
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
   },
   surahName: {
-    fontSize: 18,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
-    fontFamily: 'sans-serif-medium',
+  },
+  surahNameArabic: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  meaningContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   surahArt: {
-    fontSize: 16,
-    marginBottom: 16,
+    fontSize: 14,
+    fontStyle: 'italic',
     textAlign: 'center',
-    fontFamily: 'sans-serif',
   },
   descriptionContainer: {
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    padding: 20,
+    borderRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  ayatList: {
-    marginHorizontal: 16,
-  },
-  ayatContainer: {
-    borderRadius: 12,
-    marginBottom: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  ayatNumberContainer: {
-    alignItems: 'flex-end',
+  descriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
+  descriptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  ayatList: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  ayatContainer: {
+    borderRadius: 16,
+    marginBottom: 20,
+    padding: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  ayatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   ayatNumber: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   ayatNumberText: {
-    fontSize: 14,
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: 'bold',
+  },
+  audioButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   ayatContent: {
     marginTop: 8,
   },
   arabicText: {
-    fontSize: 24,
-    fontFamily: 'Traditional Arabic',
-    lineHeight: 48,
-    marginBottom: 12,
+    fontSize: 28,
+    lineHeight: 56,
+    marginBottom: 16,
+    textAlign: 'right',
+    fontWeight: '500',
   },
-  audioButtonContainer: {
-    alignItems: 'flex-end',
+  transliterationContainer: {
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 12,
-  },
-  audioButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   latinText: {
     fontSize: 14,
     fontStyle: 'italic',
-    marginBottom: 8,
-    fontFamily: 'sans-serif',
+    lineHeight: 20,
   },
   translationText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: 'sans-serif',
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'justify',
   },
   nextSurah: {
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  nextSurahGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginTop: 8,
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  nextSurahContent: {
+    flex: 1,
+  },
+  nextSurahLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   nextSurahText: {
     color: '#FFF',
-    fontSize: 16,
-    fontFamily: 'sans-serif-medium',
-    marginRight: 8,
-  },
-  errorText: {
-    fontSize: 16,
-    fontFamily: 'sans-serif-medium',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

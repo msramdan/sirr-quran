@@ -1,16 +1,16 @@
-//importReact
-import React, { useState, useEffect } from 'react';
-import { Alert, Text } from 'react-native';
-import Navigation from './src/navigation';
+import React from 'react';
+import { ThemeProvider } from './src/utils/ThemeContext';
 import { ToastProvider } from 'react-native-toast-notifications';
-import messaging from '@react-native-firebase/messaging';
+import Navigation from './src/navigation';
 
 const App = () => {
-    return (
-        <ToastProvider>
-            <Navigation />
-        </ToastProvider>
-    );
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <Navigation />
+      </ToastProvider>
+    </ThemeProvider>
+  );
 }
 
 export default App;

@@ -8,11 +8,15 @@ import {
   TouchableOpacity,
   TextInput,
   SafeAreaView,
-  Switch,
-  StatusBar
+  Dimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Header from '../../components/Header';
+import { useTheme } from '../../utils/ThemeContext';
+import { BASE_URL } from '../../utils/constants';
+
+const { width } = Dimensions.get('window');
 
 const QuranScreen = ({ navigation }) => {
   const [surahs, setSurahs] = useState([]);
@@ -20,40 +24,13 @@ const QuranScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Color schemes
-  const colors = {
-    light: {
-      primary: '#0F1B2D',
-      secondary: '#1A365D',
-      accent: '#4299E1',
-      background: '#F8FAFC',
-      card: '#FFFFFF',
-      text: '#1A202C',
-      subtext: '#4A5568',
-      border: '#E2E8F0',
-      searchBg: '#EDF2F7',
-    },
-    dark: {
-      primary: '#0A192F',
-      secondary: '#172A45',
-      accent: '#63B3ED',
-      background: '#1A202C',
-      card: '#2D3748',
-      text: '#F7FAFC',
-      subtext: '#CBD5E0',
-      border: '#4A5568',
-      searchBg: '#2D3748',
-    }
-  };
-
-  const theme = isDarkMode ? colors.dark : colors.light;
+  const [searchFocused, setSearchFocused] = useState(false);
+  const { colors } = useTheme();
 
   useEffect(() => {
     const fetchSurahs = async () => {
       try {
-        const response = await fetch('https://equran.id/api/v2/surat');
+        const response = await fetch(`${BASE_URL}/surat`);
         const data = await response.json();
 
         if (data.code === 200) {
@@ -86,114 +63,177 @@ const QuranScreen = ({ navigation }) => {
     }
   }, [searchQuery, surahs]);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
-  const renderHeader = () => (
-    <LinearGradient
-      colors={[theme.primary, theme.secondary]}
-      style={styles.headerContainer}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-    >
-      <View style={styles.headerContent}>
+  // Komponen Search Bar dengan layout yang lebih elegan
+  const renderSearchSection = () => (
+    <View style={[styles.searchSection, { backgroundColor: colors.background }]}>
+      {/* Header Info */}
+      <View style={styles.headerInfoContainer}>
         <View>
-          <Text style={[styles.headerTitle, { color: '#FFF' }]}>Al-Qur'an</Text>
-          <Text style={[styles.headerSubtitle, { color: 'rgba(255,255,255,0.8)' }]}>
-            Read in the name of your Lord
+          <Text style={[styles.totalSurahs, { color: colors.text }]}>
+            {surahs.length} Surahs
+          </Text>
+          <Text style={[styles.searchSubtitle, { color: colors.subtext }]}>
+            Find your surah easily
           </Text>
         </View>
-        <View style={styles.themeToggle}>
-          <Icon
-            name={isDarkMode ? 'nights-stay' : 'wb-sunny'}
-            size={20}
-            color="#FFF"
-          />
-          <Switch
-            value={isDarkMode}
-            onValueChange={toggleDarkMode}
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={isDarkMode ? "#f5dd4b" : "#f4f3f4"}
-            style={{ marginLeft: 8 }}
-          />
-        </View>
+        {searchQuery.length > 0 && (
+          <View style={styles.resultsBadge}>
+            <Text style={[styles.resultsText, { color: colors.accent }]}>
+              {filteredSurahs.length} found
+            </Text>
+          </View>
+        )}
       </View>
-
-      <View style={[styles.searchContainer, { backgroundColor: theme.primary }]}>
-        <View style={[styles.searchInputContainer, { backgroundColor: theme.searchBg }]}>
-          <Icon name="search" size={20} color={theme.subtext} style={styles.searchIcon} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
-            placeholder="Search surah..."
-            placeholderTextColor={theme.subtext}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+      
+      {/* Search Input */}
+      <View style={[
+        styles.modernSearchContainer, 
+        { 
+          backgroundColor: colors.card,
+          borderWidth: searchFocused ? 1.5 : 0,
+          borderColor: searchFocused ? colors.accent : 'transparent',
+        }
+      ]}>
+        <Icon 
+          name="search" 
+          size={22} 
+          color={searchFocused ? colors.accent : colors.subtext} 
+          style={styles.searchIcon} 
+        />
+        <TextInput
+          style={[styles.modernSearchInput, { color: colors.text }]}
+          placeholder="Search by name or number..."
+          placeholderTextColor={colors.subtext}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchQuery('')}
+            style={[styles.clearButton, { backgroundColor: colors.accent + '15' }]}
+          >
+            <Icon name="clear" size={16} color={colors.accent} />
+          </TouchableOpacity>
+        )}
       </View>
-    </LinearGradient>
+    </View>
   );
 
-  const renderSurahItem = ({ item }) => (
+  // Komponen Surah Item dengan design yang lebih elegan
+  const renderSurahItem = ({ item, index }) => (
     <TouchableOpacity
       style={[
-        styles.surahItem,
-        { backgroundColor: theme.card, borderBottomColor: theme.border }
+        styles.elegantSurahItem,
+        {
+          backgroundColor: colors.card,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border + '30',
+        }
       ]}
       activeOpacity={0.7}
       onPress={() => navigation.navigate('DetailSurah', { surahNumber: item.nomor })}
     >
-      <LinearGradient
-        colors={[theme.accent, theme.secondary]}
-        style={styles.surahNumberContainer}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-      >
-        <Text style={[styles.surahNumber, { color: '#FFF' }]}>{item.nomor}</Text>
-      </LinearGradient>
-      <View style={styles.surahInfo}>
-        <Text style={[styles.surahName, { color: theme.text }]}>{item.namaLatin}</Text>
-        <Text style={[styles.surahDetails, { color: theme.subtext }]}>
-          {item.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'} • {item.jumlahAyat} verses
-        </Text>
+      {/* Left side - Decorative number */}
+      <View style={styles.surahNumberWrapper}>
+        <LinearGradient
+          colors={[colors.accent, colors.secondary]}
+          style={styles.modernNumberContainer}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.modernSurahNumber}>{item.nomor}</Text>
+        </LinearGradient>
       </View>
-      <Text style={[styles.surahArabic, { color: theme.accent }]}>{item.nama}</Text>
+
+      {/* Middle - Main content */}
+      <View style={styles.surahContentArea}>
+        <View style={styles.surahMainInfo}>
+          <Text style={[styles.elegantSurahName, { color: colors.text }]}>
+            {item.namaLatin}
+          </Text>
+          <Text style={[styles.arabicName, { color: colors.accent }]}>
+            {item.nama}
+          </Text>
+        </View>
+        
+        <View style={styles.surahMetaInfo}>
+          <View style={styles.metaItem}>
+            <Icon 
+              name={item.tempatTurun === 'mekah' ? 'location-on' : 'location-city'} 
+              size={14} 
+              color={colors.subtext} 
+            />
+            <Text style={[styles.metaText, { color: colors.subtext }]}>
+              {item.tempatTurun === 'mekah' ? 'Makkiyah' : 'Madaniyah'}
+            </Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Icon name="article" size={14} color={colors.subtext} />
+            <Text style={[styles.metaText, { color: colors.subtext }]}>
+              {item.jumlahAyat} verses
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Right side - Action indicator */}
+      <View style={styles.actionArea}>
+        <Icon 
+          name="play-circle-outline" 
+          size={24} 
+          color={colors.accent + '80'} 
+        />
+      </View>
     </TouchableOpacity>
   );
 
   if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.accent} />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>
+          Loading Surahs...
+        </Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={[styles.errorText, { color: theme.text }]}>{error}</Text>
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <Icon name="error-outline" size={48} color={colors.accent} />
+        <Text style={[styles.errorText, { color: colors.text }]}>{error}</Text>
+        <TouchableOpacity 
+          style={[styles.retryButton, { backgroundColor: colors.accent }]}
+          onPress={() => window.location.reload()}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={theme.primary}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <FlatList
+        ListHeaderComponent={
+          <>
+            <Header
+              title="Al-Qur'an"
+              subtitle="Read in the name of your Lord"
+            />
+            {renderSearchSection()}
+          </>
+        }
+        data={filteredSurahs}
+        renderItem={renderSurahItem}
+        keyExtractor={(item) => item.nomor.toString()}
+        contentContainerStyle={styles.listContainer}
+        stickyHeaderIndices={[0]}
+        showsVerticalScrollIndicator={false}
       />
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <FlatList
-          ListHeaderComponent={renderHeader}
-          data={filteredSurahs}
-          renderItem={renderSurahItem}
-          keyExtractor={(item) => item.nomor.toString()}
-          contentContainerStyle={styles.listContainer}
-          stickyHeaderIndices={[0]}
-        />
-      </View>
     </SafeAreaView>
   );
 };
@@ -202,122 +242,157 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerContainer: {
-    paddingTop: 16,
-    paddingBottom: 8,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 8,
-    zIndex: 10,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  themeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    fontFamily: 'sans-serif-medium',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
-    fontFamily: 'sans-serif',
-  },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
+  loadingText: {
+    marginTop: 16,
     fontSize: 16,
-    height: '100%',
     fontFamily: 'sans-serif',
-  },
-  listContainer: {
-    paddingBottom: 16,
-  },
-  surahItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  surahNumberContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  surahNumber: {
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  surahInfo: {
-    flex: 1,
-  },
-  surahName: {
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'sans-serif-medium',
-  },
-  surahDetails: {
-    fontSize: 12,
-    marginTop: 4,
-    fontFamily: 'sans-serif',
-  },
-  surahArabic: {
-    fontSize: 18,
-    fontFamily: 'Traditional Arabic',
-    fontWeight: 'bold',
   },
   errorText: {
     fontSize: 16,
     fontFamily: 'sans-serif-medium',
+    textAlign: 'center',
+    marginTop: 16,
+    marginHorizontal: 32,
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Search Section Styles - Layout Elegan
+  searchSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  headerInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  totalSurahs: {
+    fontSize: 20,
+    fontWeight: '700',
+    fontFamily: 'sans-serif-medium',
+  },
+  searchSubtitle: {
+    fontSize: 13,
+    fontFamily: 'sans-serif',
+    marginTop: 2,
+  },
+  resultsBadge: {
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  resultsText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modernSearchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingHorizontal: 18,
+    height: 50,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  modernSearchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'sans-serif',
+    marginLeft: 12,
+  },
+  clearButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // List Container
+  listContainer: {
+    paddingBottom: 20,
+  },
+
+  // Elegant Surah Item Styles
+  elegantSurahItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  surahNumberWrapper: {
+    marginRight: 16,
+  },
+  modernNumberContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modernSurahNumber: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  surahContentArea: {
+    flex: 1,
+  },
+  surahMainInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  elegantSurahName: {
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: 'sans-serif-medium',
+    flex: 1,
+  },
+  arabicName: {
+    fontSize: 18,
+    fontFamily: 'Traditional Arabic',
+    fontWeight: 'bold',
+    marginLeft: 16,
+  },
+  surahMetaInfo: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    fontFamily: 'sans-serif',
+  },
+  actionArea: {
+    marginLeft: 16,
+    padding: 8,
   },
 });
 
