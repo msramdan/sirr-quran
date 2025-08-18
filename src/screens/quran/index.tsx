@@ -68,14 +68,6 @@ const QuranScreen = ({ navigation }) => {
     <View style={[styles.searchSection, { backgroundColor: colors.background }]}>
       {/* Header Info */}
       <View style={styles.headerInfoContainer}>
-        <View>
-          <Text style={[styles.totalSurahs, { color: colors.text }]}>
-            {surahs.length} Surahs
-          </Text>
-          <Text style={[styles.searchSubtitle, { color: colors.subtext }]}>
-            Find your surah easily
-          </Text>
-        </View>
         {searchQuery.length > 0 && (
           <View style={styles.resultsBadge}>
             <Text style={[styles.resultsText, { color: colors.accent }]}>
@@ -274,7 +266,7 @@ const styles = StyleSheet.create({
   // Search Section Styles - Layout Elegan
   searchSection: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.05)',
   },

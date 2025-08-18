@@ -35,6 +35,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
   const { width } = useWindowDimensions();
   const { colors, isDarkMode } = useTheme();
 
+
   useEffect(() => {
     const fetchSurahDetail = async () => {
       try {
@@ -137,7 +138,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
   const renderSurahHero = () => (
     <View style={styles.heroContainer}>
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={[colors.primary, colors.secondary]}
         start={{x: 0, y: 0}}
         end={{x: 1, y: 1}}
         style={styles.heroGradient}
@@ -225,12 +226,12 @@ const DetailSurahScreen = ({ route, navigation }) => {
         {/* Player Header */}
         <View style={styles.audioPlayerHeader}>
           <View style={styles.audioIconContainer}>
-<LinearGradient
-  colors={['#667eea', '#764ba2']}
-  style={styles.audioIconGradient}
->
-  <IconFeather name="headphones" size={20} color="#FFF" />
-</LinearGradient>
+            <LinearGradient
+              colors={[colors.primary, colors.secondary]}
+              style={styles.audioIconGradient}
+            >
+              <IconFeather name="headphones" size={20} color="#FFF" />
+            </LinearGradient>
             <View>
               <Text style={[styles.audioTitle, { color: colors.text }]}>Audio Recitation</Text>
               <Text style={[styles.audioSubtitle, { color: colors.subtext }]}>Choose your reciter</Text>
@@ -250,8 +251,8 @@ const DetailSurahScreen = ({ route, navigation }) => {
               style={[
                 styles.reciterCard,
                 { 
-                  backgroundColor: selectedAudio === qari.id ? '#667eea' : colors.background,
-                  borderColor: selectedAudio === qari.id ? '#667eea' : colors.border,
+                  backgroundColor: selectedAudio === qari.id ? colors.primary : colors.background,
+                  borderColor: selectedAudio === qari.id ? colors.primary : colors.border,
                 }
               ]}
               onPress={() => setSelectedAudio(qari.id)}
@@ -282,7 +283,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={[colors.primary, colors.secondary]}
               style={styles.playButtonGradient}
             >
               <Icon 
@@ -317,7 +318,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
       <View style={styles.ayatHeader}>
         <View style={styles.ayatNumberContainer}>
           <LinearGradient
-            colors={['#667eea', '#764ba2']}
+            colors={[colors.primary, colors.secondary]}
             style={styles.ayatNumberBadge}
           >
             <Text style={styles.ayatNumberText}>{ayat.nomorAyat}</Text>
@@ -329,7 +330,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
             styles.ayatPlayBtn, 
             { 
               backgroundColor: currentPlayingAyat === ayat.nomorAyat && isPlaying 
-                ? '#667eea20' : colors.background,
+                ? colors.primary + '20' : colors.background,
             }
           ]}
           onPress={() => playAudio(ayat.audio[selectedAudio], ayat.nomorAyat)}
@@ -338,7 +339,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
           <Icon 
             name={currentPlayingAyat === ayat.nomorAyat && isPlaying ? 'pause' : 'play-arrow'} 
             size={20} 
-            color="#667eea" 
+            color={colors.accent} 
           />
         </TouchableOpacity>
       </View>
@@ -356,7 +357,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
         </Text>
         
         {/* Indonesian Translation */}
-        <View style={[styles.translationContainer, { borderLeftColor: '#667eea' }]}>
+        <View style={[styles.translationContainer, { borderLeftColor: colors.primary }]}>
           <Text style={[styles.translationText, { color: colors.text }]}>
             {ayat.teksIndonesia}
           </Text>
@@ -368,7 +369,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color="#667eea" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.text }]}>Loading Surah...</Text>
       </View>
     );
@@ -378,14 +379,14 @@ const DetailSurahScreen = ({ route, navigation }) => {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <View style={[styles.errorContainer, { backgroundColor: colors.card }]}>
-          <Icon name="error-outline" size={48} color="#667eea" />
+          <Icon name="error-outline" size={48} color={colors.primary} />
           <Text style={[styles.errorText, { color: colors.text }]}>{error}</Text>
           <TouchableOpacity 
             style={styles.retryButton}
             onPress={() => window.location.reload()}
           >
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={[colors.primary, colors.secondary]}
               style={styles.retryButtonGradient}
             >
               <Text style={styles.retryButtonText}>Retry</Text>
@@ -421,7 +422,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
         {surahNumber !== 1 && surahNumber !== 9 && (
           <View style={styles.basmalahContainer}>
             <LinearGradient
-              colors={['#667eea15', '#764ba210']}
+              colors={[colors.primary + '15', colors.secondary + '10']}
               style={styles.basmalahCard}
             >
               <Text style={[styles.basmalahText, { color: colors.accent }]}>
@@ -447,7 +448,7 @@ const DetailSurahScreen = ({ route, navigation }) => {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={['#667eea', '#764ba2']}
+              colors={[colors.primary, colors.secondary]}
               style={styles.nextSurahCard}
             >
               <View style={styles.nextSurahContent}>
@@ -813,8 +814,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   translationText: {
-    fontSize: 15,
-    lineHeight: 24,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'justify',
   },
 
