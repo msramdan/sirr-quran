@@ -151,11 +151,6 @@ const DetailSurahScreen = ({ route, navigation }) => {
         </View>
         
         <View style={styles.heroContent}>
-          {/* Surah Number Badge */}
-          <View style={styles.surahNumberBadge}>
-            <Text style={styles.surahNumberText}>{surahNumber}</Text>
-          </View>
-          
           {/* Main Title */}
           <View style={styles.titleSection}>
             <Text style={styles.surahNameArabic}>{surahDetail.nama}</Text>
